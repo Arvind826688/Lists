@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pastel To-Do List</title>
+    <style>
+        :root {
+            /* Pastel Color Palette - Light Mode */
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --accent-primary: #ffb6c1; /* Light Pink */
+            --accent-secondary: #a5d8ff; /* Light Blue */
+            --accent-tertiary: #c5f6c5; /* Light Green */
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --border-color: #dee2e6;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --toast-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        [data-theme="dark"] {
+            /* Pastel Color Palette - Dark Mode */
+            --bg-primary: #212529;
+            --bg-secondary: #343a40;
+            --accent-primary: #d48a9a; /* Darker Pink */
+            --accent-secondary: #82b6db; /* Darker Blue */
+            --accent-tertiary: #95c795; /* Darker Green */
+            --text-primary: #f8f9fa;
+            --text-secondary: #adb5bd;
+            --border-color: #495057;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --toast-bg: rgba(52, 58, 64, 0.95);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: var(--text-primary);
+        }
+
+        .container {
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px var(--shadow-color);
+        }
+
+        .task-form {
+            display: flex;
+            margin-bottom: 2rem;
+            gap: 10px;
+        }
+
+        .task-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .task-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        button {
+            background-color: var(--accent-primary);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .button-secondary {
+            background-color: var(--accent-secondary);
+        }
+
+        .button-tertiary {
+            background-color: var(--accent-tertiary);
+        }
+
+        .task-list {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-primary);
+            box-shadow: 0 2px 5px var(--shadow-color);
+            position: relative;
+            cursor: grab;
+        }
+
+        .task-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .task-item.completed {
+            border-left-color: var(--accent-tertiary);
+            opacity: 0.7;
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        .task-checkbox {
+            margin-right: 15px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .task-text {
+            flex: 1;
+            color: var(--text-primary);
+            cursor: text;
+            padding: 3px 5px;
+            border-radius: 4px;
+        }
+
+        .task-text:focus {
+            outline: none;
+            background-color: var(--bg-primary);
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 5px;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            color: var(--text-primary);
+            transform: translateY(0);
+        }
+
+        .delete-btn:hover {
+            color: #ff6b6b;
+        }
+
+        .edit-btn:hover {
+            color: var(--accent-secondary);
+        }
+
+        .drag-handle {
+            cursor: grab;
+            margin-right: 10px;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .theme-toggle, .import-export {
+            display: flex;
+            gap: 10px;
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--accent-secondary);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--toast-bg);
+            color: var(--text-primary);
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast-text {
+            flex: 1;
+        }
+
+        .toast-action {
+            background-color: var(--accent-primary);
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .task-form {
+                flex-direction: column;
+            }
+            
+            .footer {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .theme-toggle, .import-export {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Pastel To-Do List</h1>
+            <div class="theme-toggle">
+                <span>🌞</span>
+                <label class="theme-switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span>🌙</span>
+            </div>
+        </header>
+        
+        <form id="task-form" class="task-form">
+            <input 
+                type="text" 
+                id="task-input" 
+                class="task-input" 
+                placeholder="Add a new task..." 
+                autocomplete="off" 
+                required
+            >
+            <button type="submit" id="add-task-btn">Add Task</button>
+        </form>
+        
+        <ul id="task-list" class="task-list"></ul>
+        
+        <div class="footer">
+            <div class="import-export">
+                <button id="export-btn" class="button-secondary">Export Tasks</button>
+                <button id="import-btn" class="button-tertiary">Import Tasks</button>
+                <input type="file" id="import-input" accept=".json" style="display: none;">
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast">
+        <div class="toast-text">Task deleted</div>
+        <button class="toast-action" id="undo-btn">Undo</button>
+    </div>
+
+    <script>
+        // Storage Utility Module
+        const StorageUtil = (() => {
+            // Default tasks to preload
+            const defaultTasks = [
+                { id: '1', text: 'Complete project proposal', completed: false },
+                { id: '2', text: 'Buy groceries', completed: true },
+                { id: '3', text: 'Call dentist for appointment', completed: false },
+                { id: '4', text: 'Finish reading book', completed: false },
+                { id: '5', text: 'Water plants', completed: true },
+                { id: '6', text: 'Pay electricity bill', completed: false },
+                { id: '7', text: 'Schedule team meeting', completed: false },
+                { id: '8', text: 'Research vacation destinations', completed: false },
+                { id: '9', text: 'Clean kitchen', completed: true },
+                { id: '10', text: 'Update resume', completed: false }
+            ];
+
+            let fileHandle = null;
+            let isFileSystemSupported = 'showOpenFilePicker' in window;
+
+            // Initialize storage
+            async function init() {
+                if (isFileSystemSupported) {
+                    try {
+                        // Try to use File System Access API
+                        fileHandle = await requestFileAccess();
+                        return await loadTasks();
+                    } catch (err) {
+                        console.log('File system access denied, falling back to localStorage', err);
+                        isFileSystemSupported = false;
+                    }
+                }
+                
+                // Fallback to localStorage
+                if (!isFileSystemSupported) {
+                    return loadFromLocalStorage();
+                }
+            }
+
+            // Request access to tasks.json file
+            async function requestFileAccess() {
+                try {
+                    const options = {
+                        suggestedName: 'tasks.json',
+                        types: [{
+                            description: 'JSON File',
+                            accept: {'application/json': ['.json']},
+                        }],
+                    };
+                    
+                    // Try to open existing file
+                    const [handle] = await window.showOpenFilePicker(options);
+                    return handle;
+                } catch (err) {
+                    if (err.name === 'AbortError') {
+                        throw new Error('File selection was aborted');
+                    }
+                    
+                    // If file doesn't exist, create a new one
+                    try {
+                        const handle = await window.showSaveFilePicker({
+                            suggestedName: 'tasks.json',
+                            types: [{
+                                description: 'JSON File',
+                                accept: {'application/json': ['.json']},
+                            }],
+                        });
+                        
+                        // Initialize the file with default tasks
+                        const writable = await handle.createWritable();
+                        await writable.write(JSON.stringify(defaultTasks, null, 2));
+                        await writable.close();
+                        
+                        return handle;
+                    } catch (createErr) {
+                        throw new Error('Failed to create file: ' + createErr.message);
+                    }
+                }
+            }
+
+            // Load tasks from file or initialize with defaults
+            async function loadTasks() {
+                if (!fileHandle) return defaultTasks;
+                
+                try {
+                    const file = await fileHandle.getFile();
+                    const text = await file.text();
+                    
+                    if (!text.trim()) {
+                        return defaultTasks;
+                    }
+                    
+                    return JSON.parse(text);
+                } catch (err) {
+                    console.error('Error reading tasks file:', err);
+                    return defaultTasks;
+                }
+            }
+
+            // Save tasks to file
+            async function saveTasks(tasks) {
+                if (isFileSystemSupported && fileHandle) {
+                    try {
+                        const writable = await fileHandle.createWritable();
+                        await writable.write(JSON.stringify(tasks, null, 2));
+                        await writable.close();
+                    } catch (err) {
+                        console.error('Error writing to file:', err);
+                        // Fallback to localStorage if file writing fails
+                        saveToLocalStorage(tasks);
+                    }
+                } else {
+                    saveToLocalStorage(tasks);
+                }
+            }
+
+            // LocalStorage Fallback Methods
+            function loadFromLocalStorage() {
+                const storedTasks = localStorage.getItem('tasks');
+                if (storedTasks) {
+                    return JSON.parse(storedTasks);
+                }
+                // Initialize with default tasks if nothing in localStorage
+                saveToLocalStorage(defaultTasks);
+                return defaultTasks;
+            }
+
+            function saveToLocalStorage(tasks) {
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            }
+
+            // Export tasks to a downloadable file
+            function exportTasks(tasks) {
+                const data = JSON.stringify(tasks, null, 2);
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'tasks.json';
+                document.body.appendChild(a);
+                a.click();
+                
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 0);
+            }
+
+            // Import tasks from a file
+            async function importTasks(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    
+                    reader.onload = event => {
+                        try {
+                            const tasks = JSON.parse(event.target.result);
+                            resolve(tasks);
+                        } catch (err) {
+                            reject(new Error('Invalid JSON file'));
+                        }
+                    };
+                    
+                    reader.onerror = () => reject(new Error('Error reading file'));
+                    reader.readAsText(file);
+                });
+            }
+
+            return {
+                init,
+                loadTasks,
+                saveTasks,
+                exportTasks,
+                importTasks,
+                isFileSystemSupported: () => isFileSystemSupported
+            };
+        })();
+
+        // Main App
+        const ToDoApp = (() => {
+            // DOM Elements
+            const taskForm = document.getElementById('task-form');
+            const taskInput = document.getElementById('task-input');
+            const taskList = document.getElementById('task-list');
+            const exportBtn = document.getElementById('export-btn');
+            const importBtn = document.getElementById('import-btn');
+            const importInput = document.getElementById('import-input');
+            const themeToggle = document.getElementById('theme-toggle');
+            const toast = document.getElementById('toast');
+            const undoBtn = document.getElementById('undo-btn');
+            
+            // App State
+            let tasks = [];
+            let deletedTask = null;
+            let toastTimeout = null;
+            
+            // Initialize App
+            async function init() {
+                tasks = await StorageUtil.init();
+                renderTasks();
+                setupEventListeners();
+                setupTheme();
+            }
+            
+            // Setup Event Listeners
+            function setupEventListeners() {
+                // Add task form
+                taskForm.addEventListener('submit', handleAddTask);
+                
+                // Export/Import buttons
+                exportBtn.addEventListener('click', handleExport);
+                importBtn.addEventListener('click', () => importInput.click());
+                importInput.addEventListener('change', handleImport);
+                
+                // Theme toggle
+                themeToggle.addEventListener('change', toggleTheme);
+                
+                // Undo delete
+                undoBtn.addEventListener('click', handleUndo);
+            }
+            
+            // Set up theme based on user preference
+            function setupTheme() {
+                const darkMode = localStorage.getItem('darkMode') === 'true';
+                themeToggle.checked = darkMode;
+                document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+            }
+            
+            // Toggle theme
+            function toggleTheme() {
+                const isDarkMode = themeToggle.checked;
+                document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+                localStorage.setItem('darkMode', isDarkMode);
+            }
+            
+            // Add Task Handler
+            function handleAddTask(e) {
+                e.preventDefault();
+                const text = taskInput.value.trim();
+                
+                if (text) {
+                    const newTask = {
+                        id: Date.now().toString(),
+                        text,
+                        completed: false
+                    };
+                    
+                    tasks.push(newTask);
+                    saveTasks();
+                    renderTasks();
+                    taskInput.value = '';
+                }
+            }
+            
+            // Save Tasks to Storage
+            function saveTasks() {
+                StorageUtil.saveTasks(tasks);
+            }
+            
+            // Render Tasks List
+            function renderTasks() {
+                taskList.innerHTML = '';
+                
+                tasks.forEach(task => {
+                    const taskItem = document.createElement('li');
+                    taskItem.className = `task-item ${task.completed ? 'completed' : ''}`;
+                    taskItem.dataset.id = task.id;
+                    taskItem.draggable = true;
+                    
+                    taskItem.innerHTML = `
+                        <span class="drag-handle">≡</span>
+                        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
+                        <div class="task-text" contenteditable="true">${task.text}</div>
+                        <div class="task-actions">
+                            <button class="action-btn delete-btn">🗑️</button>
+                        </div>
+                    `;
+                    
+                    setupTaskItemEvents(taskItem);
+                    taskList.appendChild(taskItem);
+                });
+                
+                setupDragAndDrop();
+            }
+            
+            // Setup events for individual task items
+            function setupTaskItemEvents(taskItem) {
+                const taskId = taskItem.dataset.id;
+                const checkbox = taskItem.querySelector('.task-checkbox');
+                const taskText = taskItem.querySelector('.task-text');
+                const deleteBtn = taskItem.querySelector('.delete-btn');
+                
+                // Toggle completed status
+                checkbox.addEventListener('change', () => {
+                    const task = tasks.find(t => t.id === taskId);
+                    if (task) {
+                        task.completed = checkbox.checked;
+                        taskItem.classList.toggle('completed', task.completed);
+                        saveTasks();
+                    }
+                });
+                
+                // Edit task text
+                taskText.addEventListener('blur', () => {
+                    const task = tasks.find(t => t.id === taskId);
+                    if (task && task.text !== taskText.textContent) {
+                        task.text = taskText.textContent;
+                        saveTasks();
+                    }
+                });
+                
+                // Handle keydown in editable text
+                taskText.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        taskText.blur();
+                    }
+                });
+                
+                // Delete task
+                deleteBtn.addEventListener('click', () => {
+                    const taskIndex = tasks.findIndex(t => t.id === taskId);
+                    if (taskIndex !== -1) {
+                        deletedTask = {
+                            task: tasks[taskIndex],
+                            index: taskIndex
+                        };
+                        tasks.splice(taskIndex, 1);
+                        saveTasks();
+                        renderTasks();
+                        showToast();
+                    }
+                });
+            }
+            
+            // Setup drag and drop reordering
+            function setupDragAndDrop() {
+                const taskItems = document.querySelectorAll('.task-item');
+                
+                taskItems.forEach(item => {
+                    // Drag start
+                    item.addEventListener('dragstart', () => {
+                        setTimeout(() => item.classList.add('dragging'), 0);
+                    });
+                    
+                    // Drag end
+                    item.addEventListener('dragend', () => {
+                        item.classList.remove('dragging');
+                        updateTasksOrder();
+                    });
+                    
+                    // Only allow dragging from the handle
+                    const dragHandle = item.querySelector('.drag-handle');
+                    dragHandle.addEventListener('mousedown', () => {
+                        item.draggable = true;
+                    });
+                    
+                    item.addEventListener('mousedown', (e) => {
+                        if (e.target !== dragHandle) {
+                            item.draggable = false;
+                        }
+                    });
+                });
+                
+                // Handle the drop zone
+                taskList.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    const draggingItem = document.querySelector('.dragging');
+                    if (!draggingItem) return;
+                    
+                    const afterElement = getDragAfterElement(taskList, e.clientY);
+                    if (afterElement) {
+                        taskList.insertBefore(draggingItem, afterElement);
+                    } else {
+                        taskList.appendChild(draggingItem);
+                    }
+                });
+            }
+            
+            // Helper function to determine where to drop the element
+            function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('.task-item:not(.dragging)')];
+                
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+            
+            // Update tasks array after drag and drop reordering
+            function updateTasksOrder() {
+                const newOrder = [];
+                const taskItems = document.querySelectorAll('.task-item');
+                
+                taskItems.forEach(item => {
+                    const taskId = item.dataset.id;
+                    const task = tasks.find(t => t.id === taskId);
+                    if (task) {
+                        newOrder.push(task);
+                    }
+                });
+                
+                if (newOrder.length === tasks.length) {
+                    tasks = newOrder;
+                    saveTasks();
+                }
+            }
+            
+            // Export tasks handler
+            function handleExport() {
+                StorageUtil.exportTasks(tasks);
+            }
+            
+            // Import tasks handler
+            async function handleImport(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                try {
+                    const importedTasks = await StorageUtil.importTasks(file);
+                    tasks = importedTasks;
+                    saveTasks();
+                    renderTasks();
+                    e.target.value = ''; // Reset file input
+                } catch (err) {
+                    alert('Error importing tasks: ' + err.message);
+                }
+            }
+            
+            // Show toast notification for undo
+            function showToast() {
+                // Clear existing timeout
+                if (toastTimeout) {
+                    clearTimeout(toastTimeout);
+                }
+                
+                toast.classList.add('show');
+                
+                toastTimeout = setTimeout(() => {
+                    hideToast();
+                    deletedTask = null;
+                }, 5000);
+            }
+            
+            // Hide toast notification
+            function hideToast() {
+                toast.classList.remove('show');
+            }
+            
+            // Handle undo delete
+            function handleUndo() {
+                if (deletedTask) {
+                    tasks.splice(deletedTask.index, 0, deletedTask.task);
+                    saveTasks();
+                    renderTasks();
+                    hideToast();
+                    deletedTask = null;
+                }
+            }
+            
+            return {
+                init
+            };
+        })();
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            ToDoApp.init();
+        });
+    </script>
+</body>
+</html>

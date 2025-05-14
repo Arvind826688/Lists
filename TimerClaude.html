@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Routine</title>
+    <style>
+        /* Google Font Import */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+        
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f9f7ff;
+            color: #4a4a4a;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        /* Container Styles */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+        
+        h1 {
+            color: #6c5ce7;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            color: #a29bfe;
+            font-weight: 300;
+            margin-bottom: 20px;
+        }
+        
+        /* Timer Grid Layout */
+        .timers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+        }
+        
+        /* Timer Card Styles */
+        .timer-card {
+            background-color: #ffffff;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .timer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(108, 92, 231, 0.2);
+        }
+        
+        .timer-card.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffffff;
+        }
+        
+        .timer-card.fullscreen .timer-display {
+            font-size: 5rem;
+        }
+        
+        .timer-card.fullscreen .timer-title {
+            font-size: 2.5rem;
+        }
+        
+        /* Timer Content Styles */
+        .timer-title {
+            color: #6c5ce7;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        .timer-display {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #2d3436;
+            text-align: center;
+            margin: 20px 0;
+            transition: font-size 0.3s ease;
+        }
+        
+        /* Control Buttons */
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .timer-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            min-width: 80px;
+        }
+        
+        .start-btn {
+            background-color: #a3e4d7;
+            color: #186a5e;
+        }
+        
+        .start-btn:hover {
+            background-color: #86d3c5;
+        }
+        
+        .pause-btn {
+            background-color: #f8c471;
+            color: #7d5816;
+        }
+        
+        .pause-btn:hover {
+            background-color: #f5b041;
+        }
+        
+        .reset-btn {
+            background-color: #f5b7b1;
+            color: #922b21;
+        }
+        
+        .reset-btn:hover {
+            background-color: #f1948a;
+        }
+        
+        .fullscreen-btn {
+            background-color: #d7bde2;
+            color: #6c3483;
+        }
+        
+        .fullscreen-btn:hover {
+            background-color: #c39bd3;
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #a3e4d7, #6c5ce7);
+            width: 0%;
+            transition: width 1s linear;
+            border-radius: 5px;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .timers-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .timer-card {
+                padding: 20px;
+            }
+            
+            .timer-display {
+                font-size: 2rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        /* Animation for buttons */
+        .timer-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Daily Routine</h1>
+            <p class="subtitle">Track your activities with individual countdown timers</p>
+        </header>
+        
+        <div class="timers-grid" id="timersGrid">
+            <!-- Timer cards will be generated by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // Timer data with durations in seconds
+        const timers = [
+            {
+                title: "Exercise + Bath",
+                duration: 5400, // 1 hour 30 minutes
+                color: "#a3e4d7"
+            },
+            {
+                title: "Mock Test",
+                duration: 10800, // 3 hours
+                color: "#d7bde2"
+            },
+            {
+                title: "Project",
+                duration: 10800, // 3 hours
+                color: "#f8c471"
+            },
+            {
+                title: "Offline Question Solving",
+                duration: 21600, // 6 hours
+                color: "#aed6f1"
+            },
+            {
+                title: "Questions Theory",
+                duration: 7200, // 2 hours
+                color: "#f5b7b1"
+            },
+            {
+                title: "Guitar",
+                duration: 1800, // 30 minutes
+                color: "#fadbd8"
+            },
+            {
+                title: "Mock Interview (Gemini)",
+                duration: 3600, // 1 hour
+                color: "#d5f5e3"
+            }
+        ];
+
+        // Timer instances will be stored here
+        const timerInstances = [];
+
+        // Initialize all timers
+        document.addEventListener('DOMContentLoaded', function() {
+            const timersGrid = document.getElementById('timersGrid');
+            
+            // Create and append timer cards
+            timers.forEach((timer, index) => {
+                // Create timer card element
+                const timerCard = document.createElement('div');
+                timerCard.className = 'timer-card';
+                timerCard.id = `timer-card-${index}`;
+                
+                // Set up timer card HTML structure
+                timerCard.innerHTML = `
+                    <h2 class="timer-title">${timer.title}</h2>
+                    <div class="timer-display" id="timer-display-${index}">
+                        ${formatTime(timer.duration)}
+                    </div>
+                    <div class="timer-controls">
+                        <button class="timer-btn start-btn" id="start-btn-${index}">Start</button>
+                        <button class="timer-btn pause-btn" id="pause-btn-${index}" disabled>Pause</button>
+                        <button class="timer-btn reset-btn" id="reset-btn-${index}">Reset</button>
+                        <button class="timer-btn fullscreen-btn" id="fullscreen-btn-${index}">Full Screen</button>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progress-bar-${index}"></div>
+                    </div>
+                `;
+                
+                // Append timer card to grid
+                timersGrid.appendChild(timerCard);
+                
+                // Create timer instance
+                const timerInstance = {
+                    duration: timer.duration,
+                    remaining: timer.duration,
+                    interval: null,
+                    isRunning: false,
+                    isFullscreen: false,
+                    elements: {
+                        display: null,
+                        startBtn: null,
+                        pauseBtn: null,
+                        resetBtn: null,
+                        fullscreenBtn: null,
+                        progressBar: null,
+                        card: timerCard
+                    }
+                };
+                
+                // Store timer instance
+                timerInstances.push(timerInstance);
+            });
+            
+            // Initialize timer controls and functionality
+            initializeTimers();
+        });
+
+        // Initialize timer functionality and event listeners
+        function initializeTimers() {
+            timerInstances.forEach((timer, index) => {
+                // Get DOM elements
+                timer.elements.display = document.getElementById(`timer-display-${index}`);
+                timer.elements.startBtn = document.getElementById(`start-btn-${index}`);
+                timer.elements.pauseBtn = document.getElementById(`pause-btn-${index}`);
+                timer.elements.resetBtn = document.getElementById(`reset-btn-${index}`);
+                timer.elements.fullscreenBtn = document.getElementById(`fullscreen-btn-${index}`);
+                timer.elements.progressBar = document.getElementById(`progress-bar-${index}`);
+                
+                // Set up event listeners
+                timer.elements.startBtn.addEventListener('click', () => startTimer(index));
+                timer.elements.pauseBtn.addEventListener('click', () => pauseTimer(index));
+                timer.elements.resetBtn.addEventListener('click', () => resetTimer(index));
+                timer.elements.fullscreenBtn.addEventListener('click', () => toggleFullscreen(index));
+                
+                // Update progress bar
+                updateProgressBar(index);
+            });
+        }
+
+        // Start the timer
+        function startTimer(index) {
+            const timer = timerInstances[index];
+            
+            if (!timer.isRunning) {
+                timer.isRunning = true;
+                timer.elements.startBtn.disabled = true;
+                timer.elements.pauseBtn.disabled = false;
+                
+                timer.interval = setInterval(() => {
+                    if (timer.remaining <= 0) {
+                        // Timer completed
+                        clearInterval(timer.interval);
+                        timer.isRunning = false;
+                        timer.elements.startBtn.disabled = true;
+                        timer.elements.pauseBtn.disabled = true;
+                        timer.elements.display.style.color = "#27ae60";
+                        
+                        // Optional: Add notification
+                        if (Notification.permission === "granted") {
+                            new Notification(`${timers[index].title} timer completed!`);
+                        }
+                        
+                        return;
+                    }
+                    
+                    // Decrement timer
+                    timer.remaining--;
+                    
+                    // Update display
+                    timer.elements.display.textContent = formatTime(timer.remaining);
+                    
+                    // Update progress bar
+                    updateProgressBar(index);
+                }, 1000);
+            }
+        }
+
+        // Pause the timer
+        function pauseTimer(index) {
+            const timer = timerInstances[index];
+            
+            if (timer.isRunning) {
+                clearInterval(timer.interval);
+                timer.isRunning = false;
+                timer.elements.startBtn.disabled = false;
+                timer.elements.pauseBtn.disabled = true;
+            }
+        }
+
+        // Reset the timer
+        function resetTimer(index) {
+            const timer = timerInstances[index];
+            
+            clearInterval(timer.interval);
+            timer.remaining = timer.duration;
+            timer.isRunning = false;
+            timer.elements.display.textContent = formatTime(timer.duration);
+            timer.elements.startBtn.disabled = false;
+            timer.elements.pauseBtn.disabled = true;
+            timer.elements.display.style.color = "#2d3436";
+            
+            // Reset progress bar
+            updateProgressBar(index);
+        }
+
+        // Toggle fullscreen mode for a timer
+        function toggleFullscreen(index) {
+            const timer = timerInstances[index];
+            const card = timer.elements.card;
+            
+            if (!timer.isFullscreen) {
+                // Enter fullscreen
+                card.classList.add('fullscreen');
+                timer.isFullscreen = true;
+                timer.elements.fullscreenBtn.textContent = "Exit Full Screen";
+            } else {
+                // Exit fullscreen
+                card.classList.remove('fullscreen');
+                timer.isFullscreen = false;
+                timer.elements.fullscreenBtn.textContent = "Full Screen";
+            }
+        }
+
+        // Update progress bar based on remaining time
+        function updateProgressBar(index) {
+            const timer = timerInstances[index];
+            const progressBar = timer.elements.progressBar;
+            const progressPercentage = ((timer.duration - timer.remaining) / timer.duration) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+
+        // Format time in HH:MM:SS format
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            return [
+                hours.toString().padStart(2, '0'),
+                minutes.toString().padStart(2, '0'),
+                secs.toString().padStart(2, '0')
+            ].join(':');
+        }
+
+        // Request notification permission (optional)
+        if ('Notification' in window) {
+            Notification.requestPermission();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Routine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- Global Styles & Variables --- */
+        :root {
+            --bg-color: #fdf6f8; /* Very light pastel pink */
+            --card-bg-color: #ffffff;
+            --primary-accent: #f4cccc; /* Soft pink */
+            --secondary-accent: #cfe2f3; /* Soft blue */
+            --tertiary-accent: #d9ead3; /* Soft green */
+            --button-bg: #eadbff; /* Soft purple */
+            --button-hover-bg: #d9c2ff;
+            --text-color: #5c5c5c;
+            --heading-color: #333;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+            --font-family: 'Poppins', sans-serif;
+        }
+
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh; /* Ensure body takes full height */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Typography --- */
+        h1 {
+            color: var(--heading-color);
+            margin-bottom: 40px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        h2 {
+            color: var(--heading-color);
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 1.3em;
+        }
+
+        /* --- Layout --- */
+        .timers-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px; /* Spacing between cards */
+            justify-content: center; /* Center cards horizontally */
+            width: 100%;
+            max-width: 1400px; /* Limit max width on large screens */
+        }
+
+        /* --- Timer Card Styling --- */
+        .timer-card {
+            background-color: var(--card-bg-color);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            text-align: center;
+            flex: 1 1 300px; /* Flex properties: grow, shrink, basis */
+            min-width: 280px; /* Minimum width before wrapping */
+            max-width: 400px; /* Maximum width */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative; /* Needed for absolute positioning if required, and stacking context */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Distribute space inside card */
+            min-height: 250px; /* Minimum card height */
+        }
+
+        .timer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px var(--shadow-color);
+        }
+
+        /* Specific card colors (optional variety) */
+        .timer-card:nth-child(6n+1) { border-top: 5px solid var(--primary-accent); }
+        .timer-card:nth-child(6n+2) { border-top: 5px solid var(--secondary-accent); }
+        .timer-card:nth-child(6n+3) { border-top: 5px solid var(--tertiary-accent); }
+        .timer-card:nth-child(6n+4) { border-top: 5px solid var(--primary-accent); }
+        .timer-card:nth-child(6n+5) { border-top: 5px solid var(--secondary-accent); }
+        .timer-card:nth-child(6n+6) { border-top: 5px solid var(--tertiary-accent); }
+
+
+        /* --- Time Display --- */
+        .time-display {
+            font-size: 2.8em; /* Large time display */
+            font-weight: 600;
+            color: var(--heading-color);
+            margin: 15px 0 25px; /* Spacing around the time */
+            font-variant-numeric: tabular-nums; /* Ensures digits align */
+        }
+
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap on small widths within card */
+            gap: 10px;
+            justify-content: center; /* Center buttons */
+            margin-top: auto; /* Push controls to the bottom */
+        }
+
+        .controls button {
+            font-family: var(--font-family);
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--button-bg);
+            color: var(--heading-color);
+            font-weight: 400;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            flex: 1 1 auto; /* Allow buttons to grow/shrink but maintain base size */
+        }
+
+        .controls button:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-2px);
+        }
+
+        .controls button:active {
+            transform: translateY(0);
+        }
+
+        /* --- Fullscreen Mode --- */
+        .timer-card.fullscreen-mode {
+            position: fixed; /* Take up full screen */
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-color); /* Use body background or a dedicated one */
+            z-index: 1000; /* Ensure it's on top */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            border-radius: 0; /* Remove border-radius in full screen */
+            box-shadow: none; /* Remove shadow in full screen */
+            border-top: none; /* Remove top border */
+            overflow-y: auto; /* Allow scrolling if content overflows */
+        }
+
+        .timer-card.fullscreen-mode h2 {
+            font-size: 2.5em; /* Larger title */
+        }
+
+        .timer-card.fullscreen-mode .time-display {
+            font-size: 6em; /* Much larger time */
+            margin: 30px 0 40px;
+        }
+
+        .timer-card.fullscreen-mode .controls {
+            width: 80%;
+            max-width: 500px;
+        }
+
+        .timer-card.fullscreen-mode .controls button {
+            padding: 15px 20px;
+            font-size: 1.1em;
+        }
+
+
+        /* --- Responsiveness --- */
+        /* Tablet */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8em; margin-bottom: 30px; }
+            .timer-card { flex-basis: calc(50% - 20px); /* Two columns */ max-width: none; }
+            .time-display { font-size: 2.2em; }
+             .timer-card.fullscreen-mode h2 { font-size: 2em; }
+            .timer-card.fullscreen-mode .time-display { font-size: 4.5em; }
+        }
+
+        /* Mobile */
+        @media (max-width: 480px) {
+            body { padding: 15px; }
+            h1 { font-size: 1.5em; margin-bottom: 25px; }
+            .timers-container { gap: 15px; }
+            .timer-card { flex-basis: 100%; /* Single column */ padding: 20px;}
+            .time-display { font-size: 2em; }
+            .controls button { font-size: 0.85em; padding: 8px 12px; }
+            .timer-card.fullscreen-mode { padding: 20px; }
+            .timer-card.fullscreen-mode h2 { font-size: 1.8em; }
+            .timer-card.fullscreen-mode .time-display { font-size: 3.5em; margin: 20px 0 30px;}
+             .timer-card.fullscreen-mode .controls { width: 90%; }
+             .timer-card.fullscreen-mode .controls button { font-size: 1em; padding: 12px 15px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Daily Routine</h1>
+
+    <div class="timers-container">
+
+        <div class="timer-card" id="timer-exercise" data-duration="5400"> <h2>Exercise + Bath</h2>
+            <div class="time-display">01:30:00</div>
+            <div class="controls">
+                <button class="start-btn">Start</button>
+                <button class="pause-btn">Pause</button>
+                <button class="reset-btn">Reset</button>
+                <button class="fullscreen-btn">Full Screen</button>
+            </div>
+        </div>
+
+        <div class="timer-card" id="timer-mocktest" data-duration="10800"> <h2>Mock Test</h2>
+            <div class="time-display">03:00:00</div>
+            <div class="controls">
+                <button class="start-btn">Start</button>
+                <button class="pause-btn">Pause</button>
+                <button class="reset-btn">Reset</button>
+                <button class="fullscreen-btn">Full Screen</button>
+            </div>
+        </div>
+
+        <div class="timer-card" id="timer-project" data-duration="10800"> <h2>Project</h2>
+            <div class="time-display">03:00:00</div>
+            <div class="controls">
+                <button class="start-btn">Start</button>
+                <button class="pause-btn">Pause</button>
+                <button class="reset-btn">Reset</button>
+                <button class="fullscreen-btn">Full Screen</button>
+            </div>
+        </div>
+
+        <div class="timer-card" id="timer-offlineqs" data-duration="21600"> <h2>Offline Question Solving</h2>
+            <div class="time-display">06:00:00</div>
+            <div class="controls">
+                <button class="start-btn">Start</button>
+                <button class="pause-btn">Pause</button>
+                <button class="reset-btn">Reset</button>
+                <button class="fullscreen-btn">Full Screen</button>
+            </div>
+        </div>
+
+        <div class="timer-card" id="timer-theory" data-duration="7200"> <h2>Questions Theory</h2>
+            <div class="time-display">02:00:00</div>
+            <div class="controls">
+                <button class="start-btn">Start</button>
+                <button class="pause-btn">Pause</button>
+                <button class="reset-btn">Reset</button>
+                <button class="fullscreen-btn">Full Screen</button>
+            </div>
+        </div>
+
+        <div class="timer-card" id="timer-guitar" data-duration="1800"> <h2>Guitar</h2>
+            <div class="time-display">00:30:00</div>
+            <div class="controls">
+                <button class="start-btn">Start</button>
+                <button class="pause-btn">Pause</button>
+                <button class="reset-btn">Reset</button>
+                <button class="fullscreen-btn">Full Screen</button>
+            </div>
+        </div>
+
+        <div class="timer-card" id="timer-interview" data-duration="3600"> <h2>Mock Interview (Gemini)</h2>
+            <div class="time-display">01:00:00</div>
+            <div class="controls">
+                <button class="start-btn">Start</button>
+                <button class="pause-btn">Pause</button>
+                <button class="reset-btn">Reset</button>
+                <button class="fullscreen-btn">Full Screen</button>
+            </div>
+        </div>
+
+    </div> <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Select all timer cards
+            const timerCards = document.querySelectorAll('.timer-card');
+
+            // --- Helper Function: Format seconds into HH:MM:SS ---
+            function formatTime(totalSeconds) {
+                if (totalSeconds < 0) totalSeconds = 0; // Ensure time doesn't go negative visually
+
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+
+                // Pad with leading zeros if needed
+                const hoursStr = String(hours).padStart(2, '0');
+                const minutesStr = String(minutes).padStart(2, '0');
+                const secondsStr = String(seconds).padStart(2, '0');
+
+                return `${hoursStr}:${minutesStr}:${secondsStr}`;
+            }
+
+            // --- Initialize Each Timer ---
+            timerCards.forEach(card => {
+                // Get elements within this specific card
+                const timeDisplay = card.querySelector('.time-display');
+                const startBtn = card.querySelector('.start-btn');
+                const pauseBtn = card.querySelector('.pause-btn');
+                const resetBtn = card.querySelector('.reset-btn');
+                const fullscreenBtn = card.querySelector('.fullscreen-btn');
+
+                // Timer state variables (independent for each card)
+                const initialDuration = parseInt(card.getAttribute('data-duration'), 10);
+                let remainingTime = initialDuration; // Time left in seconds
+                let intervalId = null; // To store the setInterval ID
+                let isPaused = true; // Timer starts paused
+
+                // --- Update Display Function ---
+                function updateDisplay() {
+                    timeDisplay.textContent = formatTime(remainingTime);
+                    // Optional: Change title when timer ends
+                    // if (remainingTime <= 0) {
+                    //     document.title = "Time's Up!";
+                    // }
+                }
+
+                // --- Timer Control Functions ---
+                function startTimer() {
+                    if (intervalId !== null || remainingTime <= 0) return; // Already running or finished
+
+                    isPaused = false;
+                    // Decrement time immediately, then set interval
+                    if (remainingTime > 0) {
+                       remainingTime--;
+                       updateDisplay();
+                    }
+
+                    intervalId = setInterval(() => {
+                        if (remainingTime <= 0) {
+                            pauseTimer(); // Effectively stops the timer
+                            // Optionally add a visual/audio cue here
+                             timeDisplay.textContent = "Done!";
+                            // alert(`${card.querySelector('h2').textContent} finished!`);
+                        } else {
+                           remainingTime--;
+                           updateDisplay();
+                        }
+                    }, 1000); // Update every second
+                     console.log(`Timer started for ${card.id}`);
+                }
+
+                function pauseTimer() {
+                    if (intervalId !== null) {
+                        clearInterval(intervalId);
+                        intervalId = null;
+                        isPaused = true;
+                         console.log(`Timer paused for ${card.id}`);
+                    }
+                }
+
+                function resetTimer() {
+                    pauseTimer(); // Stop the timer if running
+                    remainingTime = initialDuration; // Reset time
+                    isPaused = true;
+                    updateDisplay(); // Update display to initial time
+                     console.log(`Timer reset for ${card.id}`);
+                }
+
+                // --- Fullscreen Function ---
+                function toggleFullScreen() {
+                     // Check if *this specific card* is already fullscreen
+                     // Note: Browsers might exit fullscreen if ANY element requests it while another is active.
+                     // Using a class toggle is more reliable for styling a *specific* element to look fullscreen.
+                    if (!document.fullscreenElement) {
+                        // If nothing is fullscreen, make this card fullscreen (visually)
+                        card.classList.add('fullscreen-mode');
+                        fullscreenBtn.textContent = "Exit Full Screen";
+                         console.log(`Entering fullscreen for ${card.id}`);
+                         // You could attempt real fullscreen API here, but class toggle is simpler cross-browser
+                         // if (card.requestFullscreen) { card.requestFullscreen(); } ... etc
+                    } else if (card.classList.contains('fullscreen-mode')) {
+                         // If this card *is* the one in fullscreen mode, exit
+                        card.classList.remove('fullscreen-mode');
+                        fullscreenBtn.textContent = "Full Screen";
+                         console.log(`Exiting fullscreen for ${card.id}`);
+                         // Match with document exit if using real API
+                         // if (document.exitFullscreen) { document.exitFullscreen(); }
+                    } else {
+                        // Another element might be fullscreen - ideally we shouldn't interfere
+                        // Or, if you want this button to *always* exit any fullscreen:
+                         console.log("Another element might be in fullscreen.");
+                         // if (document.exitFullscreen) { document.exitFullscreen(); }
+                    }
+                }
+
+                 // Event listener for browser's native fullscreen change (e.g., pressing Esc)
+                 document.addEventListener('fullscreenchange', () => {
+                    if (!document.fullscreenElement && card.classList.contains('fullscreen-mode')) {
+                        // If browser exited fullscreen and our card *thinks* it's fullscreen, reset its state
+                        card.classList.remove('fullscreen-mode');
+                        fullscreenBtn.textContent = "Full Screen";
+                        console.log(`Browser exited fullscreen, resetting ${card.id}`);
+                    }
+                });
+
+
+                // --- Attach Event Listeners ---
+                startBtn.addEventListener('click', startTimer);
+                pauseBtn.addEventListener('click', pauseTimer);
+                resetBtn.addEventListener('click', resetTimer);
+                fullscreenBtn.addEventListener('click', toggleFullScreen);
+
+                // --- Initial Display ---
+                updateDisplay(); // Show the initial time formatted correctly
+            });
+        });
+    </script>
+
+</body>
+</html>
